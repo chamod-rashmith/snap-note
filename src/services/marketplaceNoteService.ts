@@ -109,3 +109,53 @@ export const formatPrice = (price: number, currency: "USD" | "LKR"): string => {
   }
   return `LKR ${price.toLocaleString()}`;
 };
+
+// -- Purchase Logic --
+
+// Collection reference for user purchased notes
+const getUserPurchasedNotesCollectionRef = (userId: string) => {
+  return collection(db, "users", userId, "purchased");
+};
+
+// Purchase a note (save to user's purchased subcollection)
+export const purchaseNote = async (
+  userId: string,
+  noteId: string
+): Promise<void> => {
+  const userPurchasedRef = getUserPurchasedNotesCollectionRef(userId);
+  const purchaseDocRef = doc(userPurchasedRef, noteId);
+  
+  // We can save metadata here if we want, like purchase date
+  await setDoc(purchaseDocRef, {
+    purchasedAt: Date.now(),
+    noteId: noteId
+  });
+};
+
+// Check if a note is purchased by the user
+export const checkIfPurchased = async (
+  userId: string,
+  noteId: string
+): Promise<boolean> => {
+  const userPurchasedRef = getUserPurchasedNotesCollectionRef(userId);
+  const purchaseDocRef = doc(userPurchasedRef, noteId);
+  const snap = await getDoc(purchaseDocRef);
+  return snap.exists();
+};
+
+// Get all purchased notes for a user
+export const getPurchasedNotes = async (
+  userId: string
+): Promise<MarketplaceNote[]> => {
+  const userPurchasedRef = getUserPurchasedNotesCollectionRef(userId);
+  const purchasedSnaps = await getDocs(userPurchasedRef);
+  
+  if (purchasedSnaps.empty) return [];
+  
+  const noteIds = purchasedSnaps.docs.map(doc => doc.id);
+  
+  const notesPromises = noteIds.map(id => getMarketplaceNote(id));
+  const notesResults = await Promise.all(notesPromises);
+  
+  return notesResults.filter((n): n is MarketplaceNote => n !== null);
+};

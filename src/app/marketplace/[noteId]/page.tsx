@@ -1,16 +1,18 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getMarketplaceNote, MarketplaceNote, formatPrice } from '../../../services/marketplaceNoteService';
+import { getMarketplaceNote, MarketplaceNote, formatPrice, purchaseNote, checkIfPurchased } from '../../../services/marketplaceNoteService';
+import { useAuth } from '../../../context/AuthContext';
 import Link from 'next/link';
 import { ArrowLeft, ShoppingCart, Lock } from 'lucide-react';
 import MathPreview from '../../../components/editor/MathPreview';
 
 export default function PublicNotePage() {
   const { noteId } = useParams();
+  const { user } = useAuth();
   const [note, setNote] = useState<MarketplaceNote | null>(null);
   const [loading, setLoading] = useState(true);
-  const [purchased, setPurchased] = useState(false); // Mock purchase state
+  const [purchased, setPurchased] = useState(false);
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -18,6 +20,11 @@ export default function PublicNotePage() {
       try {
         const fetchedNote = await getMarketplaceNote(noteId);
         setNote(fetchedNote);
+
+        if (user) {
+          const isPurchased = await checkIfPurchased(user.uid, noteId);
+          setPurchased(isPurchased);
+        }
       } catch (e) {
         console.error("Error fetching note", e);
       } finally {
@@ -25,14 +32,25 @@ export default function PublicNotePage() {
       }
     };
     fetchNote();
-  }, [noteId]);
+  }, [noteId, user]);
 
-  const handleBuy = () => {
-    // Mock purchase flow
-    const priceText = note ? formatPrice(note.price, note.currency) : 'Free';
+  const handleBuy = async () => {
+    if (!user) {
+      alert("Please login to purchase notes.");
+      return;
+    }
+    if (!note || typeof noteId !== 'string') return;
+
+    const priceText = formatPrice(note.price, note.currency);
     if (confirm(`Purchase this note for ${priceText}?`)) {
-      setPurchased(true);
-      alert("Purchase successful! (Mock)");
+      try {
+        await purchaseNote(user.uid, noteId);
+        setPurchased(true);
+        alert("Purchase successful!");
+      } catch (error) {
+        console.error("Purchase failed", error);
+        alert("Purchase failed. Please try again.");
+      }
     }
   };
 
@@ -52,8 +70,8 @@ export default function PublicNotePage() {
             onClick={handleBuy}
             disabled={purchased}
             className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold shadow-sm transition-colors ${purchased
-                ? 'bg-green-100 text-green-700 cursor-default'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              ? 'bg-green-100 text-green-700 cursor-default'
+              : 'bg-indigo-600 text-white hover:bg-indigo-700'
               }`}
           >
             {purchased ? (

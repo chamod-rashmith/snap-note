@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { PlusCircle, Book, ShoppingBag, DollarSign, Activity, Sparkles, X } from 'lucide-react';
 import { getUserNotes, Note, createNote } from '../../services/noteService';
 import { generateCornellNote } from '../../services/aiService';
+import { getPurchasedNotes, MarketplaceNote } from '../../services/marketplaceNoteService';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 
@@ -25,6 +26,7 @@ const MOCK_USER_ID = "test-user-123";
 
 function DashboardContent() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [purchasedNotes, setPurchasedNotes] = useState<MarketplaceNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showTopicModal, setShowTopicModal] = useState(false);
@@ -36,8 +38,12 @@ function DashboardContent() {
     const fetchNotes = async () => {
       const userId = user ? user.uid : MOCK_USER_ID;
       try {
-        const userNotes = await getUserNotes(userId);
+        const [userNotes, boughtNotes] = await Promise.all([
+          getUserNotes(userId),
+          getPurchasedNotes(userId)
+        ]);
         setNotes(userNotes);
+        setPurchasedNotes(boughtNotes);
       } catch (error) {
         console.error("Failed to fetch notes", error);
       } finally {
@@ -124,7 +130,7 @@ function DashboardContent() {
               </div>
               <div>
                 <p className="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">Purchased</p>
-                <p className="text-4xl font-black text-slate-800 tracking-tight">0</p>
+                <p className="text-4xl font-black text-slate-800 tracking-tight">{purchasedNotes.length}</p>
               </div>
             </div>
           </div>
@@ -161,6 +167,60 @@ function DashboardContent() {
             <NoteGrid notes={notes} />
           )}
         </section>
+
+        {/* Purchased Notes Section */}
+        {purchasedNotes.length > 0 && (
+          <section className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                <ShoppingBag size={20} />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Purchased Notes</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {purchasedNotes.map((note, index) => (
+                <Link
+                  key={note.id}
+                  href={`/marketplace/${note.id}`}
+                  className="block group h-full"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white/50 overflow-hidden hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 h-full flex flex-col hover:-translate-y-1 relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-emerald-50/0 pointer-events-none" />
+
+                    <div className="p-6 flex-1 relative z-10">
+                      <div className="flex justify-between items-start mb-4">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50/80 px-3 py-1 rounded-full border border-emerald-100">
+                          {note.courseCode || "General"}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                          Owned
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors line-clamp-2 leading-tight">
+                        {note.topic || "Untitled Note"}
+                      </h3>
+                      <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed">
+                        {note.content.metadata.objective || "No objective defined."}
+                      </p>
+                    </div>
+
+                    <div className="bg-white/50 backdrop-blur-sm px-6 py-4 border-t border-white/60 text-xs font-medium text-slate-400 flex justify-between items-center relative z-10 group-hover:bg-emerald-50/50 transition-colors">
+                      <span className="flex items-center gap-1">
+                        <Activity size={12} />
+                        {new Date(typeof note.createdAt === 'number' ? note.createdAt : (note.createdAt as any).seconds * 1000 || Date.now()).toLocaleDateString()}
+                      </span>
+                      <span className="bg-slate-100 px-2 py-1 rounded-md text-slate-500">
+                        {note.content.rows.length} rows
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       {/* AI Generation Modal */}
