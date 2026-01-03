@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   PlusCircle,
@@ -23,7 +23,11 @@ interface CornellEditorProps {
   isSaving?: boolean;
 }
 
-const CornellEditor: React.FC<CornellEditorProps> = ({ initialData, onSave, isSaving = false }) => {
+export interface CornellEditorHandle {
+  triggerPrint: () => void;
+}
+
+const CornellEditor = forwardRef<CornellEditorHandle, CornellEditorProps>(({ initialData, onSave, isSaving = false }, ref) => {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const promiseResolveRef = useRef<(() => void) | null>(null);
@@ -75,6 +79,13 @@ const CornellEditor: React.FC<CornellEditorProps> = ({ initialData, onSave, isSa
       promiseResolveRef.current = null;
     }
   });
+
+  // Expose print function to parent
+  useImperativeHandle(ref, () => ({
+    triggerPrint: () => {
+      handlePrint();
+    }
+  }));
 
   // Add a new row for cues/notes
   const addRow = () => {
@@ -409,6 +420,8 @@ const CornellEditor: React.FC<CornellEditorProps> = ({ initialData, onSave, isSa
       </style>
     </div>
   );
-};
+});
+
+CornellEditor.displayName = 'CornellEditor';
 
 export default CornellEditor;

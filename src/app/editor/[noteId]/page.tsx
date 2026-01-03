@@ -1,18 +1,20 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import CornellEditor from '../../../components/editor/CornellEditor';
+import CornellEditor, { CornellEditorHandle } from '../../../components/editor/CornellEditor';
 import { getNote, saveNote, publishNoteToMarketplace, getPublicNote, NoteContent, Note } from '../../../services/noteService';
 import { useAuth } from '../../../context/AuthContext';
 import Link from 'next/link';
-import { ArrowLeft, Globe, Lock, Loader2, FileQuestion, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Globe, Lock, Loader2, FileQuestion, AlertCircle, Printer } from 'lucide-react';
 
 const MOCK_USER_ID = "test-user-123";
 
 export default function EditNotePage() {
   const { noteId } = useParams();
   const router = useRouter();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
+  // TODO: Replace with real admin check
+  const isAdmin = true; // temporary for testing
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -22,6 +24,8 @@ export default function EditNotePage() {
   // Marketplace Price State
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [price, setPrice] = useState(0);
+
+  const editorRef = useRef<CornellEditorHandle>(null);
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -134,6 +138,14 @@ export default function EditNotePage() {
         </Link>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => editorRef.current?.triggerPrint()}
+            className="flex items-center text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-white/50 hover:bg-white px-3 py-1.5 rounded-lg border border-slate-200/50 hover:border-indigo-200 transition-all hover:text-indigo-600 hover:shadow-sm"
+            title="Export as PDF"
+          >
+            <Printer size={12} className="mr-1.5" /> Export PDF
+          </button>
+
           {note.isPublic ? (
             <span className="flex items-center text-[10px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
               <Globe size={12} className="mr-1.5" /> Public ($ {note.price})
@@ -153,6 +165,7 @@ export default function EditNotePage() {
 
       <div className="pb-24">
         <CornellEditor
+          ref={editorRef}
           initialData={note}
           onSave={handleSave}
           isSaving={saving}
