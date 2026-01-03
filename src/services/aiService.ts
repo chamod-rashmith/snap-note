@@ -36,45 +36,46 @@ export const generateCornellNote = async (topic: string, course: string = "Gener
     }
 
     const prompt = `
-    Generate a comprehensive Cornell Note on the topic: "${topic}".
-    Context/Course: ${course}.
+    GENERATE CORNELL NOTES CONTENT.
+    Topic: "${topic}"
+    Context: ${course}
 
-    IMPORTANT FORMATTING RULES:
-    1. Use KaTeX/LaTeX syntax for ALL mathematical expressions, formulas, and equations:
-       - Use $...$ for inline math (e.g., $E = mc^2$, $\\frac{a}{b}$, $x^2 + y^2 = r^2$)
-       - Use $$...$$ for display/block math equations that should be centered on their own line
-    2. For scientific notation, use LaTeX: $3.0 \\times 10^8$ instead of 3.0×10⁸
-    3. For fractions, use: $\\frac{numerator}{denominator}$
-    4. For subscripts/superscripts: $H_2O$, $x^2$
-    5. For Greek letters: $\\alpha$, $\\beta$, $\\pi$, $\\theta$
-    6. For integrals: $\\int_a^b f(x)dx$
-    7. For summations: $\\sum_{i=1}^{n} x_i$
-    8. For square roots: $\\sqrt{x}$, $\\sqrt[3]{x}$
-    9. Use proper LaTeX for vectors, matrices, and other mathematical structures
-    10. Even for simple numbers in mathematical context, wrap them: $n = 5$
+    STRICT MATH RENDERING RULES (KaTeX ONLY):
+    1.  Use ONLY '$' for inline math and '$$' for block equations.
+    2.  DO NOT use '\\(' or '\\[' or '\\begin{equation}'. These will break the renderer.
+    3.  Example: Use $E=mc^2$ NOT \\(E=mc^2\\).
+    4.  Scientific notation: $3.0 \\times 10^8$
+    5.  Fractions: $\\frac{a}{b}$
+    6.  **NON-LATIN TEXT (e.g. Sinhala, Tamil)**:
+        - DO NOT put non-Latin text inside '$...$' delimiters unless wrapped in '\\text{...}'.
+        - KaTeX cannot render raw non-Latin characters directly.
+        - INCORRECT: $එස්ටර$
+        - CORRECT: එස්ටර (keep outside math) OR $\\text{එස්ටර}$ (wrapped)
+        - Prefer keeping non-mathematical text OUTSIDE of the math delimiters completely.
 
-    The output MUST be valid JSON strictly adhering to the following structure:
+    SUMMARY FORMATTING RULES:
+    1.  The "summary" field MUST use bullet points if there are multiple key takeaways.
+    2.  Use a hyphen '- ' for each bullet point.
+    3.  Do NOT use markdown headers (##) in the summary.
+
+    OUTPUT FORMAT (JSON ONLY):
     {
       "metadata": {
-        "topic": "Topic Name",
+        "topic": "Title",
         "date": "YYYY-MM-DD",
         "course": "Course Name",
         "objective": "Learning objective"
       },
       "rows": [
-        { "id": "1", "cue": "Key Point/Question", "note": "Detailed explanation with LaTeX math like $formula$ embedded in text" },
-        ...
+        { "id": "1", "cue": "Question?", "note": "Explanation with $math$..." },
+        ... 5-7 rows ...
       ],
-      "summary": "Summary of the notes with any key formulas like $formula$"
+      "summary": "- Key point 1 with $math$\\n- Key point 2\\n- Key point 3"
     }
 
-    CRITICAL: 
-    - Do NOT include markdown code blocks (like \`\`\`json). Return ONLY the raw JSON string.
-    - Escape backslashes properly in JSON: use double backslash \\\\ for LaTeX commands (e.g., "\\\\frac{1}{2}" in JSON)
-    - Ensure "rows" has at least 5-7 detailed entries with rich explanations
-    - Make cues concise questions or key terms
-    - Make notes detailed explanations with examples and formulas where applicable
-    `;
+    CRITICAL:
+    - Return RAW JSON string only. NO markdown blocks.
+    - Escape all backslashes properly (e.g. "\\\\frac").`;
 
     try {
         const result = await aiModel.generateContent(prompt);
