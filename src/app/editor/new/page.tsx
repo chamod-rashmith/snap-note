@@ -10,6 +10,18 @@ import { ArrowLeft, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 const MOCK_USER_ID = "test-user-123";
 
 export default function NewNotePage() {
+    return (
+        <React.Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-slate-100">
+                <Loader2 className="animate-spin text-slate-400" size={32} />
+            </div>
+        }>
+            <NewNoteContent />
+        </React.Suspense>
+    );
+}
+
+function NewNoteContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user } = useAuth();
