@@ -55,27 +55,8 @@ export default function NewNotePage() {
         }
     };
 
-    if (!generatedContent) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100 p-8 text-center space-y-6">
-                <div className="bg-white p-6 rounded-full shadow-lg">
-                    <AlertCircle size={48} className="text-rose-500" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 mb-2">No Content Found</h1>
-                    <p className="text-slate-500 max-w-md mx-auto mb-8">
-                        No AI-generated content was found. Please generate a note from the dashboard.
-                    </p>
-                    <Link
-                        href="/dashboard"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all font-bold"
-                    >
-                        <ArrowLeft size={18} /> Return to Dashboard
-                    </Link>
-                </div>
-            </div>
-        );
-    }
+    // If no generated content, defaults will be used in CornellEditor (or we can pass explicit defaults)
+    // We don't need to return an error view anymore for "new note" flow.
 
     return (
         <div className="min-h-screen bg-slate-100">
@@ -86,15 +67,21 @@ export default function NewNotePage() {
                 </Link>
 
                 <div className="flex items-center gap-2">
-                    <span className="flex items-center text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100">
-                        <Sparkles size={12} className="mr-1.5" /> AI Generated - Not Saved Yet
-                    </span>
+                    {generatedContent ? (
+                        <span className="flex items-center text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100">
+                            <Sparkles size={12} className="mr-1.5" /> AI Generated - Not Saved Yet
+                        </span>
+                    ) : (
+                        <span className="flex items-center text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-300">
+                            New Note - Unsaved
+                        </span>
+                    )}
                 </div>
             </div>
 
             <div className="pb-24">
                 <CornellEditor
-                    initialData={tempNote!}
+                    initialData={tempNote || undefined}
                     onSave={handleSave}
                     isSaving={saving}
                 />

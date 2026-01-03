@@ -101,7 +101,7 @@ function DashboardContent() {
               AI Generate
             </button>
             <Link
-              href="/editor"
+              href="/editor/new"
               className="group flex items-center justify-center gap-3 bg-slate-900 text-white px-6 py-3 rounded-full hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 font-bold"
             >
               <PlusCircle size={20} className="group-hover:rotate-90 transition-transform" />
