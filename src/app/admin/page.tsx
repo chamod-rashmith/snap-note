@@ -12,7 +12,8 @@ import {
   DollarSign,
   Loader2,
   BookOpen,
-  Store
+  Store,
+  Sparkles
 } from 'lucide-react';
 import {
   MarketplaceNote,
@@ -23,6 +24,7 @@ import {
   updateMarketplaceNote,
   formatPrice,
 } from '../../services/marketplaceNoteService';
+import { generateCornellNote } from '../../services/aiService';
 
 interface NoteFormData {
   topic: string;
@@ -53,6 +55,11 @@ function AdminContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // AI Generation State
+  const [showTopicModal, setShowTopicModal] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiTopic, setAiTopic] = useState("");
+
   useEffect(() => {
     fetchNotes();
   }, []);
@@ -65,6 +72,33 @@ function AdminContent() {
       console.error('Failed to fetch notes:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAiGenerate = async () => {
+    if (!aiTopic.trim()) return;
+
+    setIsGenerating(true);
+    try {
+      const noteContent = await generateCornellNote(aiTopic);
+
+      if (noteContent) {
+        setFormData(prev => ({
+          ...prev,
+          topic: noteContent.metadata.topic,
+          courseCode: noteContent.metadata.course,
+          objective: noteContent.metadata.objective,
+          rows: noteContent.rows,
+          summary: noteContent.summary
+        }));
+        setShowTopicModal(false);
+        setAiTopic("");
+      }
+    } catch (error) {
+      console.error("Failed to generate note:", error);
+      alert("Failed to generate note. Please try again.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -208,12 +242,22 @@ function AdminContent() {
                 <BookOpen size={24} className="text-indigo-600" />
                 {editingId ? 'Edit Marketplace Note' : 'Add New Marketplace Note'}
               </h2>
-              <button
-                onClick={handleCancel}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTopicModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-violet-600 to-indigo-600 text-white rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all font-semibold shadow-md"
+                >
+                  <Sparkles size={18} className="text-yellow-300" />
+                  AI Generate
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -450,6 +494,66 @@ function AdminContent() {
           )}
         </div>
       </div>
+
+      {/* AI Generation Modal */}
+      {showTopicModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                  <Sparkles size={20} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900">Generate Note</h2>
+              </div>
+              <button
+                onClick={() => setShowTopicModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                disabled={isGenerating}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  What would you like to learn about?
+                </label>
+                <input
+                  type="text"
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  placeholder="e.g., Photosynthesis, The French Revolution..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isGenerating) handleAiGenerate();
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={handleAiGenerate}
+                disabled={!aiTopic.trim() || isGenerating}
+                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Generating Magic...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={18} />
+                    Generate & Populate Form
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
