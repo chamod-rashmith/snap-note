@@ -9,14 +9,12 @@ import {
     signOut as firebaseSignOut,
     GoogleAuthProvider,
     signInWithPopup,
-    getIdTokenResult,
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    isAdmin: boolean;
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (email: string, password: string) => Promise<void>;
     signInWithGoogle: () => Promise<void>;
@@ -28,24 +26,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
-
-            if (user) {
-                // Check for admin custom claim
-                try {
-                    const tokenResult = await getIdTokenResult(user);
-                    setIsAdmin(tokenResult.claims.admin === true);
-                } catch {
-                    setIsAdmin(false);
-                }
-            } else {
-                setIsAdmin(false);
-            }
-
             setLoading(false);
         });
 
@@ -72,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const value: AuthContextType = {
         user,
         loading,
-        isAdmin,
         signIn,
         signUp,
         signInWithGoogle,

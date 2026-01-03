@@ -10,7 +10,7 @@ import {
   Timestamp
 } from "firebase/firestore";
 
-const USE_LOCAL_STORAGE = true;
+const USE_LOCAL_STORAGE = false;
 
 export interface NoteContent {
   metadata: {

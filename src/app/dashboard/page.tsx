@@ -2,8 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { PlusCircle, Book, ShoppingBag, DollarSign, Activity } from 'lucide-react';
-import { getUserNotes, Note } from '../../services/noteService';
+import { useRouter } from 'next/navigation';
+import { PlusCircle, Book, ShoppingBag, DollarSign, Activity, Sparkles, X } from 'lucide-react';
+import { getUserNotes, Note, createNote } from '../../services/noteService';
+import { generateCornellNote } from '../../services/aiService';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 
@@ -24,7 +26,11 @@ const MOCK_USER_ID = "test-user-123";
 function DashboardContent() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showTopicModal, setShowTopicModal] = useState(false);
+  const [topic, setTopic] = useState("");
   const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchNotes = async () => {
@@ -42,6 +48,27 @@ function DashboardContent() {
     fetchNotes();
   }, [user]);
 
+  const handleGenerateNote = async () => {
+    if (!topic.trim()) return;
+
+    setIsGenerating(true);
+    try {
+      const noteContent = await generateCornellNote(topic);
+      if (noteContent) {
+        setShowTopicModal(false);
+        setTopic("");
+        // Pass generated content to editor via URL params (not saved yet)
+        const encodedContent = encodeURIComponent(JSON.stringify(noteContent));
+        router.push(`/editor/new?content=${encodedContent}`);
+      }
+    } catch (error) {
+      console.error("Failed to generate note", error);
+      alert("Failed to generate note. Please check your AI quota or try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">
       {/* Decorative Background Blobs */}
@@ -58,20 +85,29 @@ function DashboardContent() {
             <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">My Dashboard</h1>
             <p className="text-lg text-slate-500">Welcome back, {user?.displayName || user?.email?.split('@')[0] || 'Scholar'}.</p>
           </div>
-          <Link
-            href="/editor"
-            className="group flex items-center justify-center gap-3 bg-slate-900 text-white px-6 py-3 rounded-full hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 font-bold"
-          >
-            <PlusCircle size={20} className="group-hover:rotate-90 transition-transform" />
-            Create New Note
-          </Link>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setShowTopicModal(true)}
+              className="group flex items-center justify-center gap-3 bg-indigo-600 text-white px-6 py-3 rounded-full hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 font-bold"
+            >
+              <Sparkles size={20} className="text-yellow-300" />
+              AI Generate
+            </button>
+            <Link
+              href="/editor"
+              className="group flex items-center justify-center gap-3 bg-slate-900 text-white px-6 py-3 rounded-full hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 font-bold"
+            >
+              <PlusCircle size={20} className="group-hover:rotate-90 transition-transform" />
+              Create New Note
+            </Link>
+          </div>
         </header>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           <div className="bg-white/60 backdrop-blur-lg p-8 rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-center gap-5">
-              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-2xl text-white shadow-lg group-hover:scale-110 transition-transform">
+              <div className="bg-linear-to-br from-blue-500 to-cyan-500 p-4 rounded-2xl text-white shadow-lg group-hover:scale-110 transition-transform">
                 <Book size={28} />
               </div>
               <div>
@@ -83,7 +119,7 @@ function DashboardContent() {
 
           <div className="bg-white/60 backdrop-blur-lg p-8 rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-center gap-5">
-              <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-4 rounded-2xl text-white shadow-lg group-hover:scale-110 transition-transform">
+              <div className="bg-linear-to-br from-emerald-500 to-teal-500 p-4 rounded-2xl text-white shadow-lg group-hover:scale-110 transition-transform">
                 <ShoppingBag size={28} />
               </div>
               <div>
@@ -95,7 +131,7 @@ function DashboardContent() {
 
           <div className="bg-white/60 backdrop-blur-lg p-8 rounded-3xl border border-white/50 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-center gap-5">
-              <div className="bg-gradient-to-br from-violet-500 to-purple-500 p-4 rounded-2xl text-white shadow-lg group-hover:scale-110 transition-transform">
+              <div className="bg-linear-to-br from-violet-500 to-purple-500 p-4 rounded-2xl text-white shadow-lg group-hover:scale-110 transition-transform">
                 <DollarSign size={28} />
               </div>
               <div>
@@ -126,6 +162,66 @@ function DashboardContent() {
           )}
         </section>
       </div>
+
+      {/* AI Generation Modal */}
+      {showTopicModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                  <Sparkles size={20} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900">Generate Note</h2>
+              </div>
+              <button
+                onClick={() => setShowTopicModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                disabled={isGenerating}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  What would you like to learn about?
+                </label>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g., Photosynthesis, The French Revolution..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isGenerating) handleGenerateNote();
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={handleGenerateNote}
+                disabled={!topic.trim() || isGenerating}
+                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Generating Magic...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={18} />
+                    Generate Cornell Note
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

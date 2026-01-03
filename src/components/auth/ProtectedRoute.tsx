@@ -11,18 +11,19 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-    const { user, loading, isAdmin } = useAuth();
+    const { user, loading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
-        if (!loading) {
-            if (!user) {
+        if (!loading && !user) {
+            // If accessing admin route, redirect to admin login
+            if (requireAdmin) {
+                router.push('/admin/login');
+            } else {
                 router.push('/');
-            } else if (requireAdmin && !isAdmin) {
-                router.push('/dashboard');
             }
         }
-    }, [user, loading, isAdmin, requireAdmin, router]);
+    }, [user, loading, requireAdmin, router]);
 
     if (loading) {
         return (
@@ -37,9 +38,6 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
         return null;
     }
 
-    if (requireAdmin && !isAdmin) {
-        return null;
-    }
-
     return <>{children}</>;
 }
+

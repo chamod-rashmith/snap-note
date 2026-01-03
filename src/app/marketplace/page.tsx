@@ -2,23 +2,23 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, Filter, Sparkles, ArrowRight } from 'lucide-react';
-import { getMarketplaceNotes, Note } from '../../services/noteService';
+import { getMarketplaceNotes, MarketplaceNote } from '../../services/marketplaceNoteService';
 import dynamic from 'next/dynamic';
 
 // Lazy load marketplace grid
 const MarketplaceGrid = dynamic(() => import('../../components/marketplace/MarketplaceGrid'), {
   loading: () => (
-     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {[1,2,3,4,5,6].map(i => (
-             <div key={i} className="h-80 bg-slate-100 rounded-2xl animate-pulse"></div>
-        ))}
-     </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {[1, 2, 3, 4, 5, 6].map(i => (
+        <div key={i} className="h-80 bg-slate-100 rounded-2xl animate-pulse"></div>
+      ))}
+    </div>
   ),
   ssr: false
 });
 
 export default function Marketplace() {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<MarketplaceNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -47,20 +47,20 @@ export default function Marketplace() {
       {/* Hero Header */}
       <div className="bg-white border-b border-slate-200 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-             <div className="absolute -top-[50%] -right-[20%] w-[800px] h-[800px] bg-indigo-50/50 rounded-full blur-3xl"></div>
-             <div className="absolute top-[20%] left-[10%] w-[300px] h-[300px] bg-purple-50/50 rounded-full blur-3xl"></div>
+          <div className="absolute -top-[50%] -right-[20%] w-[800px] h-[800px] bg-indigo-50/50 rounded-full blur-3xl"></div>
+          <div className="absolute top-[20%] left-[10%] w-[300px] h-[300px] bg-purple-50/50 rounded-full blur-3xl"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 pt-16 pb-12 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-10">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/50 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase tracking-widest mb-4">
-                 <Sparkles size={12} />
-                 <span>Top Rated Notes</span>
+                <Sparkles size={12} />
+                <span>Top Rated Notes</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-                Discover Knowledge. <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Ace Your Exams.</span>
+                Discover Knowledge. <br />
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600">Ace Your Exams.</span>
               </h1>
               <p className="text-lg text-slate-500 max-w-lg">
                 Access high-quality Cornell notes from top students. Save time and study smarter.
@@ -94,15 +94,15 @@ export default function Marketplace() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-12">
-         {loading ? (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-               {[1,2,3,4,5,6].map(i => (
-                   <div key={i} className="h-96 bg-slate-200/50 rounded-2xl animate-pulse"></div>
-               ))}
-           </div>
-         ) : (
-           <MarketplaceGrid notes={filteredNotes} />
-         )}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="h-96 bg-slate-200/50 rounded-2xl animate-pulse"></div>
+            ))}
+          </div>
+        ) : (
+          <MarketplaceGrid notes={filteredNotes} />
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -11,7 +11,8 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "mock-app-id",
 };
 
-let app;
+let app: FirebaseApp | undefined;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let auth: any = {
     currentUser: null,
     onAuthStateChanged: () => () => {},
@@ -19,6 +20,7 @@ let auth: any = {
     signInWithEmailAndPassword: async () => {},
     createUserWithEmailAndPassword: async () => {},
 };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any = {};
 
 try {

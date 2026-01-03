@@ -1,14 +1,14 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { getPublicNote, Note } from '../../../services/noteService';
+import { useParams } from 'next/navigation';
+import { getMarketplaceNote, MarketplaceNote, formatPrice } from '../../../services/marketplaceNoteService';
 import Link from 'next/link';
 import { ArrowLeft, ShoppingCart, Lock } from 'lucide-react';
 import MathPreview from '../../../components/editor/MathPreview';
 
 export default function PublicNotePage() {
   const { noteId } = useParams();
-  const [note, setNote] = useState<Note | null>(null);
+  const [note, setNote] = useState<MarketplaceNote | null>(null);
   const [loading, setLoading] = useState(true);
   const [purchased, setPurchased] = useState(false); // Mock purchase state
 
@@ -16,7 +16,7 @@ export default function PublicNotePage() {
     const fetchNote = async () => {
       if (typeof noteId !== 'string') return;
       try {
-        const fetchedNote = await getPublicNote(noteId);
+        const fetchedNote = await getMarketplaceNote(noteId);
         setNote(fetchedNote);
       } catch (e) {
         console.error("Error fetching note", e);
@@ -29,7 +29,8 @@ export default function PublicNotePage() {
 
   const handleBuy = () => {
     // Mock purchase flow
-    if (confirm(`Purchase this note for ${note?.price ? '$' + note.price : 'Free'}?`)) {
+    const priceText = note ? formatPrice(note.price, note.currency) : 'Free';
+    if (confirm(`Purchase this note for ${priceText}?`)) {
       setPurchased(true);
       alert("Purchase successful! (Mock)");
     }
@@ -50,18 +51,17 @@ export default function PublicNotePage() {
           <button
             onClick={handleBuy}
             disabled={purchased}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold shadow-sm transition-colors ${
-              purchased
-              ? 'bg-green-100 text-green-700 cursor-default'
-              : 'bg-indigo-600 text-white hover:bg-indigo-700'
-            }`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold shadow-sm transition-colors ${purchased
+                ? 'bg-green-100 text-green-700 cursor-default'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              }`}
           >
             {purchased ? (
               <span>Owned</span>
             ) : (
               <>
                 <ShoppingCart size={18} />
-                {note.price && note.price > 0 ? `Buy for $${note.price}` : 'Get for Free'}
+                {note.price && note.price > 0 ? `Buy for ${formatPrice(note.price, note.currency)}` : 'Get for Free'}
               </>
             )}
           </button>
@@ -77,12 +77,12 @@ export default function PublicNotePage() {
                 {note.courseCode || "General"}
               </span>
               <h1 className="text-3xl font-bold text-slate-900 mt-2">{note.topic}</h1>
-              <p className="text-slate-500 mt-1">By User {note.ownerId.substring(0,6)}...</p>
+              <p className="text-slate-500 mt-1">By SnapNote Admin</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-slate-400 uppercase font-bold tracking-wider">Price</p>
               <p className="text-2xl font-bold text-slate-800">
-                {note.price && note.price > 0 ? `$${note.price.toFixed(2)}` : 'FREE'}
+                {formatPrice(note.price, note.currency)}
               </p>
             </div>
           </div>
@@ -98,46 +98,46 @@ export default function PublicNotePage() {
         {/* Preview Section */}
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden relative">
           <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-             <h2 className="font-bold text-slate-700">Preview</h2>
-             {!purchased && (
-               <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100 flex items-center gap-1">
-                 <Lock size={12} /> Limited View
-               </span>
-             )}
+            <h2 className="font-bold text-slate-700">Preview</h2>
+            {!purchased && (
+              <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100 flex items-center gap-1">
+                <Lock size={12} /> Limited View
+              </span>
+            )}
           </div>
 
           <div className={`p-8 ${!purchased ? 'relative' : ''}`}>
-             {/* We show the first 2 rows, then blur the rest if not purchased */}
-             <div className="space-y-8">
-               {note.content.rows.slice(0, purchased ? undefined : 2).map((row, i) => (
-                 <div key={i} className="flex flex-col md:flex-row gap-6 border-b border-slate-100 pb-6 last:border-0">
-                    <div className="w-full md:w-1/3">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Cue / Question</h4>
-                      <MathPreview content={row.cue} className="text-indigo-800 font-medium" />
-                    </div>
-                    <div className="w-full md:w-2/3">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Notes</h4>
-                      <MathPreview content={row.note} className="text-slate-700" />
-                    </div>
-                 </div>
-               ))}
-             </div>
+            {/* We show the first 2 rows, then blur the rest if not purchased */}
+            <div className="space-y-8">
+              {note.content.rows.slice(0, purchased ? undefined : 2).map((row, i) => (
+                <div key={i} className="flex flex-col md:flex-row gap-6 border-b border-slate-100 pb-6 last:border-0">
+                  <div className="w-full md:w-1/3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Cue / Question</h4>
+                    <MathPreview content={row.cue} className="text-indigo-800 font-medium" />
+                  </div>
+                  <div className="w-full md:w-2/3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Notes</h4>
+                    <MathPreview content={row.note} className="text-slate-700" />
+                  </div>
+                </div>
+              ))}
+            </div>
 
-             {/* Blur Overlay if not purchased */}
-             {!purchased && note.content.rows.length > 2 && (
-               <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-white via-white/90 to-transparent flex items-center justify-center">
-                 <div className="text-center p-6">
-                   <Lock size={48} className="mx-auto text-slate-300 mb-4" />
-                   <h3 className="text-xl font-bold text-slate-800 mb-2">Purchase to Unlock Full Note</h3>
-                   <button
-                     onClick={handleBuy}
-                     className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition-transform hover:-translate-y-0.5"
-                   >
-                     Buy Now for {note.price && note.price > 0 ? `$${note.price}` : 'Free'}
-                   </button>
-                 </div>
-               </div>
-             )}
+            {/* Blur Overlay if not purchased */}
+            {!purchased && note.content.rows.length > 2 && (
+              <div className="absolute inset-x-0 bottom-0 h-64 bg-linear-to-t from-white via-white/90 to-transparent flex items-center justify-center">
+                <div className="text-center p-6">
+                  <Lock size={48} className="mx-auto text-slate-300 mb-4" />
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">Purchase to Unlock Full Note</h3>
+                  <button
+                    onClick={handleBuy}
+                    className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition-transform hover:-translate-y-0.5"
+                  >
+                    Buy Now for {formatPrice(note.price, note.currency)}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
