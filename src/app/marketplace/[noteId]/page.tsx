@@ -106,10 +106,11 @@ export default function PublicNotePage() {
           </div>
 
           <div className="prose prose-slate max-w-none">
-            <h3 className="text-sm font-bold uppercase text-slate-400 tracking-wider mb-1">Learning Objective</h3>
-            <p className="text-slate-700 bg-slate-50 p-4 rounded-lg italic">
-              {note.content.metadata.objective || "No objective defined."}
-            </p>
+            <h3 className="text-sm font-bold uppercase text-slate-400 tracking-wider mb-1">Summary</h3>
+            <MathPreview
+              content={note.content.summary || note.content.metadata.objective || "No summary available."}
+              className="text-slate-700 bg-slate-50 p-4 rounded-lg italic"
+            />
           </div>
         </div>
 
@@ -159,6 +160,6 @@ export default function PublicNotePage() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

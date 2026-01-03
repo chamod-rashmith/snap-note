@@ -9,6 +9,7 @@ import { generateCornellNote } from '../../services/aiService';
 import { getPurchasedNotes, MarketplaceNote } from '../../services/marketplaceNoteService';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
+import MathPreview from '../../components/editor/MathPreview';
 
 // Lazy load the NoteGrid component
 const NoteGrid = dynamic(() => import('../../components/dashboard/NoteGrid'), {
@@ -187,7 +188,7 @@ function DashboardContent() {
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white/50 overflow-hidden hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 h-full flex flex-col hover:-translate-y-1 relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-emerald-50/0 pointer-events-none" />
+                    <div className="absolute inset-0 bg-linear-to-br from-white/40 to-emerald-50/0 pointer-events-none" />
 
                     <div className="p-6 flex-1 relative z-10">
                       <div className="flex justify-between items-start mb-4">
@@ -201,9 +202,9 @@ function DashboardContent() {
                       <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors line-clamp-2 leading-tight">
                         {note.topic || "Untitled Note"}
                       </h3>
-                      <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed">
-                        {note.content.metadata.objective || "No objective defined."}
-                      </p>
+                      <div className="text-sm text-slate-500 line-clamp-3 leading-relaxed">
+                        <MathPreview content={note.content.summary || note.content.metadata.objective || "No summary available."} />
+                      </div>
                     </div>
 
                     <div className="bg-white/50 backdrop-blur-sm px-6 py-4 border-t border-white/60 text-xs font-medium text-slate-400 flex justify-between items-center relative z-10 group-hover:bg-emerald-50/50 transition-colors">
@@ -224,65 +225,67 @@ function DashboardContent() {
       </div>
 
       {/* AI Generation Modal */}
-      {showTopicModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
-                  <Sparkles size={20} />
+      {
+        showTopicModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-200">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <Sparkles size={20} />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-900">Generate Note</h2>
                 </div>
-                <h2 className="text-xl font-bold text-slate-900">Generate Note</h2>
-              </div>
-              <button
-                onClick={() => setShowTopicModal(false)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
-                disabled={isGenerating}
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  What would you like to learn about?
-                </label>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g., Photosynthesis, The French Revolution..."
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !isGenerating) handleGenerateNote();
-                  }}
-                />
+                <button
+                  onClick={() => setShowTopicModal(false)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                  disabled={isGenerating}
+                >
+                  <X size={24} />
+                </button>
               </div>
 
-              <button
-                onClick={handleGenerateNote}
-                disabled={!topic.trim() || isGenerating}
-                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-              >
-                {isGenerating ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Generating Magic...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={18} />
-                    Generate Cornell Note
-                  </>
-                )}
-              </button>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    What would you like to learn about?
+                  </label>
+                  <input
+                    type="text"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="e.g., Photosynthesis, The French Revolution..."
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isGenerating) handleGenerateNote();
+                    }}
+                  />
+                </div>
+
+                <button
+                  onClick={handleGenerateNote}
+                  disabled={!topic.trim() || isGenerating}
+                  className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Generating Magic...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={18} />
+                      Generate Cornell Note
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
 
