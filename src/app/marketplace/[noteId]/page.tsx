@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getMarketplaceNote, MarketplaceNote, formatPrice, purchaseNote, checkIfPurchased } from '../../../services/marketplaceNoteService';
@@ -130,8 +132,8 @@ export default function PublicNotePage() {
               onClick={handleBuy}
               disabled={purchased}
               className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold shadow-sm transition-colors ${purchased
-                  ? 'bg-green-100 text-green-700 cursor-default'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                ? 'bg-green-100 text-green-700 cursor-default'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
                 }`}
             >
               {purchased ? (
